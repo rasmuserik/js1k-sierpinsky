@@ -1,81 +1,95 @@
 //
 // Forth-like-language that compiles to small (< 1K) JavaScript files.
 //
-function trim(s) {
-    return s.replace(/^\s*(\S*(\s+\S+)*)\s*$/, "$1");
-};
 
 fs = require("fs");
-_ = require("underscore");
+
 if (process.argv.length != 3
         || process.argv[2].slice(-4) !== ".f1k") {
     console.log("Usage: node compile.js $infile.f1k");
     process.exit();
 }
 
-lines = fs.readFileSync(process.argv[2], "utf8").split("\n");
+function parseFile(filename) {
+    var fn, i, line, lines, pos;
 
-fn = {};
+    lines = fs.readFileSync(filename, "utf8").split("\n");
 
-for (i=0;i<lines.length;++i) {
-    line = trim(lines[i]);
-    if (line === "" || line.slice(0,2) === "//") {
-        continue;
+    fn = {};
+
+    // run through the file
+    for (i=0;i<lines.length;++i) {
+
+        // trim each line
+        line = lines[i].replace(/^\s*(\S*(\s+\S+)*)\s*$/, "$1");
+
+        // skip line if commens or empty
+        if (line === "" || line.slice(0,2) === "//") {
+            continue;
+        }
+
+        // first thing on the line is the name of the function
+        pos = 0;
+        while (line[pos] != ' ') ++pos;
+        name = line.slice(0,pos);
+        while (line[pos] === ' ') ++pos;
+
+        // read function definition
+        fn[name] = readDef();
     }
 
-    pos = 0;
-    while (line[pos] != ' ') {
-        ++pos;
-    }
-    name = line.slice(0,pos);
-    while (line[pos] === ' ') ++pos;
-
+    // read a function definition until endline or }
     function readDef() {
-        var result, pos0; // pos and line is in external scope
-        result = [];
-        while (pos < line.length) {
+
+        // pos and line is in external scope
+        var result = [], pos0;
+
+        // rest if we are at the end of a function def
+        function notEnd() {
+            return pos < line.length && line[pos] !== "}";
+        }
+
+        // continue reading til we arrive at a ' ' or end-def
+        function findWS() {
+            while (notEnd() && line[pos] !== ' ') ++pos;
+        }
+
+        while (notEnd()) {
             pos0 = pos;
             if (line[pos] === '"') {
                 ++pos;
-                while (pos<line.length && line[pos] !== '"') {
+                while (notEnd() && line[pos] !== '"') {
                     ++pos;
                 }
                 ++pos;
                 result.push(["string", line.slice(pos0+1, pos-1)]);
             } else if (line[pos] === '$') {
-                while (pos < line.length && line[pos] !== ' ') {
-                    ++pos;
-                }
+                findWS();
                 result.push(["builtin", parseInt(line.slice(pos0+1))]);
             } else if ('0' <= line[pos] && line[pos] <= '9') {
-                while (pos < line.length && line[pos] !== ' ') {
-                    ++pos;
-                }
+                findWS();
                 result.push(["num", parseInt(line.slice(pos0))]);
             } else if (line[pos] === "'") {
-                while (pos < line.length && line[pos] !== ' ') {
-                    ++pos;
-                }
+                findWS();
                 result.push(["quote", line.slice(pos0+1, pos)]);
             } else {
-                while (pos < line.length && line[pos] !== ' ') {
-                    ++pos;
-                }
+                findWS();
                 result.push(["call", line.slice(pos0, pos)]);
             }
             while (line[pos] === ' ') ++pos;
         }
+        ++pos;
         return result;
     }
-    fn[name] = readDef();
+    return fn;
 }
 
 
+fn = parseFile(process.argv[2]);
 
 //
 // Code generator
 //
-
 var i = 0;
 for (x in fn) {
     fn[x].id = i;
@@ -112,7 +126,8 @@ for (key in fn) {
             } else {
                 string_id = strings.length;
 strings[str] = {id:
-                                string_id};
+                                string_id
+                               };
                 str = str.replace("\n", "\\n").replace("\t", "\\t").replace("\"", "\\\"").replace("\\","\\\\");
                 strings.push(str);
             }
