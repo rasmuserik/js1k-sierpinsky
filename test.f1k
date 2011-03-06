@@ -5,3 +5,5 @@
 
 main "console.log('hello " 123 "')" $0 hellotest
 hellotest $1
+test {"foo" "bar"} {"baz"} 1
+test2 {"foo" "bar"} {"baz"} 1

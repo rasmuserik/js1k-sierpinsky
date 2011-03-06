@@ -11,7 +11,7 @@ if (process.argv.length != 3
 }
 
 function parseFile(filename) {
-    var fn, i, line, lines, pos;
+    var fn, i, line, lines, pos, anon = 0;
 
     lines = fs.readFileSync(filename, "utf8").split("\n");
 
@@ -72,6 +72,11 @@ function parseFile(filename) {
             } else if (line[pos] === "'") {
                 findWS();
                 result.push(["quote", line.slice(pos0+1, pos)]);
+            } else if (line[pos] === "{") {
+                ++pos;
+                ++anon;
+                fn["__ANON" + anon] = readDef();
+                result.push(["quote", "__ANON"+anon]);
             } else {
                 findWS();
                 result.push(["call", line.slice(pos0, pos)]);
@@ -128,8 +133,14 @@ function compile(fn) {
                 } else {
                     string_id = strings.length;
 strings[str] = { "id":
-                                     string_id };
-                    str = str.replace("\n", "\\n").replace("\t", "\\t").replace("\"", "\\\"").replace("\\","\\\\");
+                                     string_id
+                                   };
+                    /*
+                    str = str.replace(RegExp(".", "g"), function(c) {
+                            c = c.charCodeAt(0);
+                            return "\\x" + (c<16?"0":"") + c.toString(16);
+                            });
+                            */
                     strings.push(str);
                 }
                 op = 2;
@@ -140,20 +151,17 @@ strings[str] = { "id":
             } else {
                 console.log("unexpected node type: " + x[i][0]);
             }
-console.log( {op: op, n: n});
             s += String.fromCharCode(op + 4*n);
         }
         code.push(x.src = s);
     }
 
-    console.log(fn);
-    console.log(strings);
-
     code.push(strings.join("\x00"));
-    return code.join("\x00");
+    code = code.join("\x00");
+    code = code.replace(RegExp("\n", "g"), "\\n").replace(RegExp("\r", "g"), "\\r").replace(RegExp("\"", "g"), "\\\"").replace(RegExp("\\\\", "g"),"\\\\");
+    return code;
 }
 codestr = compile(fn);
-console.log(codestr);
 interpreter = fs.readFileSync("interpreter.js", "utf8");
 code = interpreter.replace("$CODESTR", '"' + codestr + '"');
 code = code.replace("$SPLITSYMB", '"' + "\x00" + '"');
