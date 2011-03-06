@@ -1,6 +1,7 @@
 
 // sample code
 
-main "console.log('hello world " 123 "')" $0 hellotest 
-hellotest $1
+//main "console.log('hello world " 123 "')" $0 hellotest 
 
+main "console.log('hello " 123 "')" $0 hellotest
+hellotest $1

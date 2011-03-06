@@ -28,9 +28,11 @@ for(i=0;i<lines.length;++i) {
         ++pos;
     }
     name = line.slice(0,pos);
-    fn[name] = [];
     while(line[pos] === ' ') ++pos;
 
+  function readDef() {
+      var result, pos0; // pos and line is in external scope
+      result = [];
     while(pos < line.length) {
         pos0 = pos;
         if(line[pos] === '"') {
@@ -39,35 +41,95 @@ for(i=0;i<lines.length;++i) {
                 ++pos;
             }
             ++pos;
-            fn[name].push(["string", line.slice(pos0, pos)]);
+            result.push(["string", line.slice(pos0+1, pos-1)]);
         } else if(line[pos] === '$') {
             while(pos < line.length && line[pos] !== ' ') { ++pos; }
-            fn[name].push(["builtin", parseInt(line.slice(pos0+1))]);
+            result.push(["builtin", parseInt(line.slice(pos0+1))]);
         } else if('0' <= line[pos] && line[pos] <= '9') {
             while(pos < line.length && line[pos] !== ' ') { ++pos; }
-            fn[name].push(["num", parseInt(line.slice(pos0))]);
+            result.push(["num", parseInt(line.slice(pos0))]);
         } else if(line[pos] === "'") {
             while(pos < line.length && line[pos] !== ' ') {
                 ++pos;
             }
-            fn[name].push(["quote", line.slice(pos0+1, pos)]);
+            result.push(["quote", line.slice(pos0+1, pos)]);
         } else {
             while(pos < line.length && line[pos] !== ' ') {
                 ++pos;
             }
-            fn[name].push(["call", line.slice(pos0, pos)]);
+            result.push(["call", line.slice(pos0, pos)]);
         }
         while(line[pos] === ' ') ++pos;
     }
+    return result;
+  }
+  fn[name] = readDef();
 }
-console.log(fn);
+
+
 
 //
 // Code generator
 //
+
+var i = 0;
+for(x in fn) {
+    fn[x].id = i;
+    ++i;
+}
+fncount = i;
+
+strings = [];
+code = [];
+for(key in fn) {
+    x = fn[key];
+    var s = "";
+    for(i = 0; i < x.length; ++i) {
+        var op;
+        if(x[i][0] === "call") {
+            op = 0; n = fn[x[i][1]].id;
+            if(n === undefined) {
+                console.log("could not find function: " + fn[i][1] + " while compiling " + x);
+            }
+        } else if(x[i][0] === "quote") {
+            op = 3; n = fn[x[i][1]].id;
+            if(n === undefined) {
+                console.log("could not find function: " + fn[i][1] + " while compiling " + x);
+            }
+        } else if(x[i][0] === "builtin") {
+            op = 1; n = x[i][1];
+        } else if(x[i][0] === "string") {
+            var str = x[i][1];
+            if(strings[str]) {
+                string_id = strings[str].id;
+            } else {
+                string_id = strings.length;
+                strings[str] = {id: string_id};
+                str = str.replace("\n", "\\n").replace("\t", "\\t").replace("\"", "\\\"").replace("\\","\\\\");
+                strings.push(str);
+            }
+            op = 2;
+            n = string_id;
+        } else if(x[i][0] === "num") {
+            op = 3; n = x[i][1];
+        } else {
+            console.log("unexpected node type: " + x[i][0]);
+        }
+        console.log({op: op, n: n});
+        s += String.fromCharCode(op + 4*n);
+    }
+    code.push(x.src = s);
+}
+
+console.log(fn);
+console.log(strings);
+
+
 codestr = "\x02\x01\x05~console.log('Hello world')";
-fncount = 1;
-splitsymb = "~";
+splitsymb = "\x00";
+code.push(strings.join(splitsymb));
+codestr = code.join(splitsymb);
+console.log(codestr);
 interpreter = fs.readFileSync("interpreter.js", "utf8");
 code = interpreter.replace("$CODESTR", '"' + codestr + '"');
 code = code.replace("$SPLITSYMB", '"' + splitsymb + '"');
