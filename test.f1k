@@ -1,0 +1,6 @@
+
+// sample code
+
+main "console.log('hello world " 123 "')" $0 hellotest 
+hellotest $1
+
