@@ -11,32 +11,7 @@ if (process.argv.length != 3
 }
 
 function parseFile(filename) {
-    var fn, i, line, lines, pos, anon = 0;
-
-    lines = fs.readFileSync(filename, "utf8").split("\n");
-
-    fn = {};
-
-    // run through the file
-    for (i=0;i<lines.length;++i) {
-
-        // trim each line
-        line = lines[i].replace(/^\s*(\S*(\s+\S+)*)\s*$/, "$1");
-
-        // skip line if commens or empty
-        if (line === "" || line.slice(0,2) === "//") {
-            continue;
-        }
-
-        // first thing on the line is the name of the function
-        pos = 0;
-        while (line[pos] != ' ') ++pos;
-        name = line.slice(0,pos);
-        while (line[pos] === ' ') ++pos;
-
-        // read function definition
-        fn[name] = readDef();
-    }
+    var fn, js, i, line, lines, pos, anon = 0, jsId = 1;
 
     // read a function definition until endline or }
     function readDef() {
@@ -86,6 +61,43 @@ function parseFile(filename) {
         ++pos;
         return result;
     }
+
+    lines = fs.readFileSync(filename, "utf8").split("\n");
+
+    fn = {'__main__':[]};
+
+    // run through the file
+    for (i=0;i<lines.length;++i) {
+
+        // trim each line
+        line = lines[i].replace(/^\s*(\S*(\s+\S+)*)\s*$/, "$1");
+
+        // skip line if commens or empty
+        if (line === "" || line.slice(0,2) === "//") {
+            continue;
+        }
+
+
+        // handle prepended '$' which means that this is a native function definition
+        js = (line[0] === '$');
+
+        // first thing on the line is the name of the function
+        pos = 0;
+        while (line[pos] !== ' ') ++pos;
+        name = line.slice(js?1:0,pos);
+        while (line[pos] === ' ') ++pos;
+
+        // read function definition
+        if(js) {
+            [].push.apply(fn["__main__"], readDef());
+            fn["__main__"].push(["builtin", 0]);
+            fn[name] = [["builtin", jsId]];
+            ++jsId;
+        } else {
+            fn[name] = readDef();
+        }
+    }
+    fn["__main__"].push(["call", "main"]);
     return fn;
 }
 
