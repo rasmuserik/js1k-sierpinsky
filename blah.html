@@ -1,0 +1,259 @@
+<!doctype html>
+<html>
+	<head>
+		<title>JS1k, 1k demo submission [ID]</title>
+		<meta charset="utf-8" />
+	</head>
+	<body>
+		<canvas id="c"></canvas>
+		<script>
+			var b = document.body;
+			var c = document.getElementsByTagName('canvas')[0];
+			var a = c.getContext('2d');
+			document.body.clientWidth; // fix bug in webkit: http://qfox.nl/weblog/218
+		</script>
+		<script>
+// start of submission //
+c.width=1000;
+c.height=500;
+/*
+c.style.width="95%";
+c.style.height="95%";
+*/
+
+
+d = a.getImageData(0,0,c.width,c.height);
+e = d.data;
+
+vs = 1;
+function blit() {
+    a.putImageData(d,0,0);
+}
+
+function getp(x,y) {
+    return d.data[(y*c.width+x)*4+0] /*+
+        (d.data[(y*c.width+x)*4+1]<<8) +
+        (d.data[(y*c.width+x)*4+2]<<16)*/;
+}
+
+function setp(x,y,e) {
+    d.data[((y|0)*c.width+(x|0))*4+0] = 255&(e);
+    /*d.data[(y*c.width+x)*4+1] = 255&(e>>8);
+    d.data[(y*c.width+x)*4+2] = 255&(e>>16);*/
+    d.data[(y*c.width+x)*4+3] = 255;
+
+}
+function incp(x,y,e) {
+    if(0<x && x<c.width) {
+    d.data[((y|0)*c.width+(x|0))*4+0] += 50;
+}
+}
+
+function fade() {
+    for(var i=e.length;i>0; i-=4) {
+        e[i-1]=255;
+        e[i-2]=255&(e[i-2]*.999);
+        e[i-3]=255&(e[i-3]*.999);
+        e[i-4]=255&(e[i-4]*.999);
+    }
+}
+function clear() {
+    for(var i=0;i<e.length;i+=4) {
+        e[i]=0;
+        /*e[i+1]=0;
+        e[i+2]=0;*/
+        e[i+3]=255;
+    }
+}
+
+w = wi = 0;
+function drawset() {
+    for(y=0;y<c.height;++y) {
+        for(x=0;x<c.width;++x) {
+        w = 0.3;
+        wi = 0.03;
+        z = x/c.width*4 - 2;
+        zi = y/c.height*4 - 2;
+        for(i=0;i<255;++i) {
+            //(z+zi)*(z+zi) + w + wi
+            //z*z+2z*zi+zi*zi+w+wi
+            zn = z*z-zi*zi+w;
+            zi = 2 * z * zi + wi;
+            z = zn;
+            if(z*z+zi*zi > 10000) {
+                break;
+            }
+        }
+        setp(x,y,i);
+        }
+    }
+    blit();
+    setTimeout(drawpts, 0);
+}
+
+function pm() {
+    if(Math.random() > .5) {
+        return 1;
+    } else {
+        return -1;
+    }
+}
+
+k=0;
+pts = [];
+    w0 = Math.random()*2-1;
+    wi0 = Math.random()*2-1;
+    w1 = Math.random()*2-1;
+    wi1 = Math.random()*2-1;
+pts0 = [];
+kcount = 1000;
+function newpts() {
+    //pts = pts0;
+    //pts0=[];
+    k = 0;
+    //drawpts();
+    d3();
+}
+function drawpts() {
+    var z, zi, t, ti, r, s;
+    //clear();
+    w = k/kcount*w0 + (1-k/kcount) * w1;
+    wi = k/kcount*wi0 + (1-k/kcount) * wi1;
+    // zn = z*z + w
+    // z = sqrt(zn - w);
+    for(i=0;i<1;++i) {
+        z = Math.random() * 2 - 1;
+        zi = Math.random() * 2 - 1;
+        for(j=0;j<20;++j) {
+            // sqrt(z+zi-w-wi) = sqrt((z-w)+(zi-wi)) = 
+            // r = sqrt(
+            function sign(x) {
+                return x>0?1:-1;
+            }
+                Zx = z;
+                Zy = zi;
+                Cx = w;
+                Cy = wi;
+
+                Zx=Zx-Cx;
+                Zy=Zy-Cy;
+                if (Zx>0)
+                {
+                 NewZx=Math.sqrt((Zx+Math.sqrt(Zx*Zx+Zy*Zy))/2);
+                 NewZy=Zy/(2*NewZx);        
+                 }
+                 else /* ZX <= 0 */
+                 {
+                  if (Zx<0)
+                     {
+                      NewZy=sign(Zy)*Math.sqrt((-Zx+Math.sqrt(Zx*Zx+Zy*Zy))/2);
+                      NewZx=Zy/(2*NewZy);        
+                      }
+                      else /* Zx=0 */
+                      {
+                       NewZx=Math.sqrt(Math.abs(Zy)/2);
+                       if (NewZx>0) NewZy=Zy/(2*NewZx);
+                          else NewZy=0;    
+                      }
+                 };
+              if (Math.random()<.5)
+              {   
+                  Zx=NewZx;
+                  Zy=NewZy; 
+                  }
+              else {Zx=-NewZx;
+                  Zy=-NewZy; }
+
+
+
+
+            z = s * Math.sqrt((r + t)/2);
+            zi = s * Math.sqrt((r + t)/2);
+            z = Zx;
+            zi = Zy;
+            if(j>10) pts[k] = ({x:z/4, y:zi/4, z:k/kcount-.5}); 
+        }
+    }
+    //blit();
+    ++k;
+    if(k < kcount) {
+        setTimeout(drawpts, 1);
+    } else {
+        
+        newpts();
+    }
+}
+drawpts();
+//d3();
+
+
+function transform(pt) {
+    v1 = 0.005*vs;
+    v2 = 0.01*vs;
+    var xa = pt.x * Math.cos(v1) - pt.y * Math.sin(v1);
+    var ya = pt.x * Math.sin(v1) + pt.y * Math.cos(v1);
+    var za = xa * Math.sin(v2) + pt.z * Math.cos(v2);
+    var xa = xa * Math.cos(v2) - pt.z * Math.sin(v2);
+    return {x:xa, y:ya, z:za};
+}
+
+function d3() {
+        clear();
+        for(var i=0;i<pts.length;++i) {
+            p = pts[i];
+            p = transform(p);
+            incp((p.x+.5)*c.width, (p.y+.5)*c.height);
+            //console.log(p.x, p.y);
+            //pts[i] = p;
+        }
+        ++vs;
+        blit();
+        setTimeout(d3, 10);
+}
+
+x=y=100;
+function f() {
+    for(var i=0;i<10000;++i){
+    x=Math.abs(x%c.width)+Math.random()-.5;
+    y=Math.abs(y%c.height)+Math.random()-.5;
+        d.data[((y|0)*c.width+(x|0))*4+0] += 1;
+    }
+    fade();
+    blit();
+    setTimeout(f, 100);
+}
+/*
+t=0.1;
+function f() {
+    t*=1.01
+    for(y=0;y<c.height;++y) {
+        for(x=0;x<c.width;++x) {
+        }
+    }
+    blit();
+    setTimeout(f, 0);
+}
+f()
+*/
+
+
+for(i=0;i<d.data.length;++i) {
+//    d.data[i] = 255&(Math.random()*256)
+}
+a.putImageData(d,0,0);
+/*
+c.style.width = "95%";
+c.style.height = "95%";
+
+for(y=0;y<c.height;++y) {
+    for(x=0;x<c.width;++x) {
+        d.data[(x+y*c.width)*4+1]=0;
+    }
+}
+*/
+
+
+// end of submission //
+		</script>
+	</body>
+</html>
