@@ -14,9 +14,11 @@
 		</script>
 		<script>
 // start of submission //
+c.width=796;
+c.height=512;
+/*
 c.width=1000;
 c.height=500;
-/*
 c.style.width="95%";
 c.style.height="95%";
 */
@@ -30,16 +32,8 @@ function blit() {
     a.putImageData(d,0,0);
 }
 
-function getp(x,y) {
-    return d.data[(y*c.width+x)*4+0] /*+
-        (d.data[(y*c.width+x)*4+1]<<8) +
-        (d.data[(y*c.width+x)*4+2]<<16)*/;
-}
-
 function setp(x,y,e) {
     d.data[((y|0)*c.width+(x|0))*4+0] = 255&(e);
-    /*d.data[(y*c.width+x)*4+1] = 255&(e>>8);
-    d.data[(y*c.width+x)*4+2] = 255&(e>>16);*/
     d.data[(y*c.width+x)*4+3] = 255;
 
 }
@@ -60,131 +54,99 @@ function fade() {
 function clear() {
     for(var i=0;i<e.length;i+=4) {
         e[i]=0;
-        /*e[i+1]=0;
-        e[i+2]=0;*/
         e[i+3]=255;
-    }
-}
-
-w = wi = 0;
-function drawset() {
-    for(y=0;y<c.height;++y) {
-        for(x=0;x<c.width;++x) {
-        w = 0.3;
-        wi = 0.03;
-        z = x/c.width*4 - 2;
-        zi = y/c.height*4 - 2;
-        for(i=0;i<255;++i) {
-            //(z+zi)*(z+zi) + w + wi
-            //z*z+2z*zi+zi*zi+w+wi
-            zn = z*z-zi*zi+w;
-            zi = 2 * z * zi + wi;
-            z = zn;
-            if(z*z+zi*zi > 10000) {
-                break;
-            }
-        }
-        setp(x,y,i);
-        }
-    }
-    blit();
-    setTimeout(drawpts, 0);
-}
-
-function pm() {
-    if(Math.random() > .5) {
-        return 1;
-    } else {
-        return -1;
     }
 }
 
 k=0;
 pts = [];
-    w0 = Math.random()*2-1;
-    wi0 = Math.random()*2-1;
-    w1 = Math.random()*2-1;
-    wi1 = Math.random()*2-1;
+w0 = Math.random()*(Math.random() - Math.random());
+wi0 = Math.random()*(Math.random() - Math.random());
+w1 = Math.random()*(Math.random() - Math.random());
+wi1 = Math.random()*(Math.random() - Math.random());
+w0=wi0=w1=wi1=0;
 pts0 = [];
-kcount = 1000;
+kcount = 30000;
+newpts();
 function newpts() {
+    w0 += Math.random()*-.5;
+    wi0 += Math.random()*-.5;
+    w1 += Math.random()*-.5;
+    wi1 +=  Math.random()*-.5;
     //pts = pts0;
     //pts0=[];
     k = 0;
-    //drawpts();
-    d3();
+    setTimeout(drawpts,0);
+//    d3();
 }
 function drawpts() {
-    var z, zi, t, ti, r, s;
+    for(;;){
+    var z, zi, t, ti, r, s, Newz, Newzi;
+    var random = Math.random;
+    var sqrt = Math.sqrt;
     //clear();
     w = k/kcount*w0 + (1-k/kcount) * w1;
     wi = k/kcount*wi0 + (1-k/kcount) * wi1;
     // zn = z*z + w
     // z = sqrt(zn - w);
-    for(i=0;i<1;++i) {
-        z = Math.random() * 2 - 1;
-        zi = Math.random() * 2 - 1;
+        z = random() * 2 - 1;
+        zi = random() * 2 - 1;
         for(j=0;j<20;++j) {
             // sqrt(z+zi-w-wi) = sqrt((z-w)+(zi-wi)) = 
             // r = sqrt(
             function sign(x) {
                 return x>0?1:-1;
             }
-                Zx = z;
-                Zy = zi;
                 Cx = w;
                 Cy = wi;
 
-                Zx=Zx-Cx;
-                Zy=Zy-Cy;
-                if (Zx>0)
+                z=z-Cx;
+                zi=zi-Cy;
+                if (z>0)
                 {
-                 NewZx=Math.sqrt((Zx+Math.sqrt(Zx*Zx+Zy*Zy))/2);
-                 NewZy=Zy/(2*NewZx);        
+                 Newz=sqrt((z+sqrt(z*z+zi*zi))/2);
+                 Newzi=zi/(2*Newz);        
                  }
                  else /* ZX <= 0 */
                  {
-                  if (Zx<0)
+                  if (z<0)
                      {
-                      NewZy=sign(Zy)*Math.sqrt((-Zx+Math.sqrt(Zx*Zx+Zy*Zy))/2);
-                      NewZx=Zy/(2*NewZy);        
+                      Newzi=sign(zi)*sqrt((-z+sqrt(z*z+zi*zi))/2);
+                      Newz=zi/(2*Newzi);        
                       }
-                      else /* Zx=0 */
+                      else /* z=0 */
                       {
-                       NewZx=Math.sqrt(Math.abs(Zy)/2);
-                       if (NewZx>0) NewZy=Zy/(2*NewZx);
-                          else NewZy=0;    
+                       Newz=sqrt(Math.abs(zi)/2);
+                       if (Newz>0) Newzi=zi/(2*Newz);
+                          else Newzi=0;    
                       }
                  };
-              if (Math.random()<.5)
+              if (random()<.5)
               {   
-                  Zx=NewZx;
-                  Zy=NewZy; 
+                  z=Newz;
+                  zi=Newzi; 
                   }
-              else {Zx=-NewZx;
-                  Zy=-NewZy; }
+              else {z=-Newz;
+                  zi=-Newzi; }
 
 
-
-
-            z = s * Math.sqrt((r + t)/2);
-            zi = s * Math.sqrt((r + t)/2);
-            z = Zx;
-            zi = Zy;
-            if(j>10) pts[k] = ({x:z/4, y:zi/4, z:k/kcount-.5}); 
+            pts[k] = ({x:z/8, y:zi/8, z:k/kcount/2-.25}); 
         }
-    }
     //blit();
     ++k;
+    if(k%300===0) {
     if(k < kcount) {
-        setTimeout(drawpts, 1);
+        setTimeout(drawpts, 0);
     } else {
-        
-        newpts();
+        setTimeout(newpts,000);
+    }
+        return
     }
 }
-drawpts();
+}
+//drawpts();
 //d3();
+d3();
 
 
 function transform(pt) {
@@ -208,7 +170,7 @@ function d3() {
         }
         ++vs;
         blit();
-        setTimeout(d3, 10);
+        setTimeout(d3, 0);
 }
 
 x=y=100;
