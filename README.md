@@ -1,4 +1,4 @@
-# f1k - Forth-like-language for 1 Kilobyte applications.
+# ![logo](https://solsort.com/_logo.png) f1k - Forth-like-language for 1 Kilobyte applications.
 
 Forth-like language for compact JavaScript programs.
 The language runtime is less than 200bytes JavaScript, 
