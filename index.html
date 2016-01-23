@@ -1,11 +1,16 @@
 <!doctype html>
 <html>
 	<head>
-		<title>JS1k, 1k demo submission [ID]</title>
 		<meta charset="utf-8" />
 	</head>
 	<body>
+    <p>Minimal sierpinsky triangle implemented in 70 bytes in a js1k environment:<br/>
+    <code>for(b=[i=1];i&lt;6310;)(b[i+99]=b[i]^b[i++-1])&amp;&amp;a.fillRect(i%99,i/99,1,1)</code>
+    </p>
 		<canvas id="c"></canvas>
+    <pre>
+    </pre>
+    </p>
 		<script>
 			var b = document.body;
 			var c = document.getElementsByTagName('canvas')[0];
@@ -16,7 +21,7 @@
 // start of submission //
 /* Sierpinski triangle, twitter version (1/2-tweet) #js1k */
 //34567890123456789012345678901234567890123456789012345678901234567890
-for(b=[i=1];i<6310;)(b[i+99]=b[i]^b[i++-1])&&a.fillRect(i%99,i/99,1,1) 
+for(b=[i=1];i<6310;)(b[i+99]=b[i]^b[i++-1])&&a.fillRect(i%99,i/99,1,1)
 // end of submission //
 		</script>
 	</body>
